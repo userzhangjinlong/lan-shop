@@ -23,6 +23,10 @@ class UserAddressController extends Controller
         return view('user_address.create_and_edit', ['address' => new UserAddress()]);
     }
 
+    /**
+     * @param UserAddressRequest $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function store(UserAddressRequest $request){
         /**
          * $request->user() 获取当前登录用户。
@@ -41,5 +45,45 @@ class UserAddressController extends Controller
         return redirect()->route('user_addresses.index');
     }
 
+    /**
+     * @param UserAddress $user_address
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function edit(UserAddress $user_address)
+    {
+        return view('user_address.create_and_edit', ['address' => $user_address]);
+    }
+
+    /**
+     * @param UserAddress $user_address
+     * @param UserAddressRequest $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function update(UserAddress $user_address, UserAddressRequest $request)
+    {
+        $user_address->update($request->only([
+            'province',
+            'city',
+            'district',
+            'address',
+            'zip',
+            'contact_name',
+            'contact_phone',
+        ]));
+
+        return redirect()->route('user_addresses.index');
+    }
+
+    /**
+     * @param UserAddress $user_address
+     * @return array
+     * @throws \Exception
+     */
+    public function destroy(UserAddress $user_address)
+    {
+        $user_address->delete();
+
+        return [];
+    }
 
 }
