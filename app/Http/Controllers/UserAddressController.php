@@ -51,6 +51,11 @@ class UserAddressController extends Controller
      */
     public function edit(UserAddress $user_address)
     {
+        /**
+         * 检测是否是当前自己用户对应权限
+         */
+        $this->authorize('own', $user_address);
+
         return view('user_address.create_and_edit', ['address' => $user_address]);
     }
 
@@ -61,6 +66,11 @@ class UserAddressController extends Controller
      */
     public function update(UserAddress $user_address, UserAddressRequest $request)
     {
+        /**
+         * 检测是否是当前自己用户对应权限
+         */
+        $this->authorize('own', $user_address);
+
         $user_address->update($request->only([
             'province',
             'city',
@@ -81,6 +91,11 @@ class UserAddressController extends Controller
      */
     public function destroy(UserAddress $user_address)
     {
+        /**
+         * 检测是否是当前自己用户对应权限
+         */
+        $this->authorize('own', $user_address);
+
         $user_address->delete();
 
         return [];
