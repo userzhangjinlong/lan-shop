@@ -10,8 +10,10 @@
 | contains the "web" middleware group. Now create something great!
 |
 */
-
+//首页
 Route::get('/', 'PagesController@root')->name('root');
+//商品列表
+Route::get('products', 'ProductsController@index')->name('products.index');
 Auth::routes();
 Route::group(['middleware' => 'auth'], function() {
     //用户邮箱验证
