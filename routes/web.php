@@ -14,6 +14,7 @@
 Route::get('/', 'PagesController@root')->name('root');
 //商品列表
 Route::get('products', 'ProductsController@index')->name('products.index');
+
 Auth::routes();
 Route::group(['middleware' => 'auth'], function() {
     //用户邮箱验证
@@ -28,5 +29,12 @@ Route::group(['middleware' => 'auth'], function() {
         Route::get('user_addresses/{user_address}', 'UserAddressController@edit')->name('user_addresses.edit');
         Route::put('user_addresses/{user_address}', 'UserAddressController@update')->name('user_addresses.update');
         Route::delete('user_addresses/{user_address}', 'UserAddressController@destroy')->name('user_addresses.destroy');
+
+        //商品收藏
+        Route::post('products/{product}/favorite', 'ProductsController@favor')->name('products.favor');
+        Route::delete('products/{product}/favorite', 'ProductsController@disfavor')->name('products.disfavor');
+        Route::get('products/favorites', 'ProductsController@favorites')->name('products.favorites');
     });
 });
+//收藏商品列表和商品详情列表参数冲突解决
+Route::get('products/{product}', 'ProductsController@show')->name('products.show');
