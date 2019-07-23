@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\OrderRequest;
+use App\Jobs\CloseOrder;
 use App\Models\Order;
 use App\Models\ProductSku;
 use App\Models\UserAddress;
@@ -67,7 +68,8 @@ class OrdersController extends Controller
             //下订单商品从购物车中移除
             $skuIds = collect($items)->pluck('sku_id');
             $user->CartItems()->whereIn('product_sku_id', $skuIds)->delete();
-
+            //订单创建成功开启任务
+            $this->dispatch(new CloseOrder($order, config('app.order_ttl')));
             return $order;
 
         });

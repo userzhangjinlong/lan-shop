@@ -127,6 +127,11 @@ return [
 
     'log_level' => env('APP_LOG_LEVEL', 'debug'),
 
+    /**
+     * 订单过期时间 秒
+     */
+    'order_ttl' => 900,
+
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers
