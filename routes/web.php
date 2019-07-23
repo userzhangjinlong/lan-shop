@@ -42,6 +42,8 @@ Route::group(['middleware' => 'auth'], function() {
 
         //订单
         Route::post('orders', 'OrdersController@store')->name('orders.store');
+        Route::get('orders', 'OrdersController@index')->name('orders.index');
+        Route::get('orders/{order}', 'OrdersController@show')->name('orders.show');
     });
 });
 //收藏商品列表和商品详情列表参数冲突解决
