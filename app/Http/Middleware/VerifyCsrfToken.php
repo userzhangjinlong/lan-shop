@@ -14,5 +14,6 @@ class VerifyCsrfToken extends Middleware
     protected $except = [
         //crsf白名单 添加路由不检测csrf
         'payment/alipay/notify',
+        'payment/wecaht/notify',
     ];
 }

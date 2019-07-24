@@ -20,7 +20,7 @@ return [
         'app_id'      => '',
         'mch_id'      => '',
         'key'         => '',
-        'cert_client' => '',
+        'cert_client' => '', //为resources/wechat_pay 目录下面防止pem支付微信证书文件
         'cert_key'    => '',
         'log'         => [
             'file' => storage_path('logs/wechat_pay.log'),
