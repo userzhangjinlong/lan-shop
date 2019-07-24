@@ -44,6 +44,16 @@ Route::group(['middleware' => 'auth'], function() {
         Route::post('orders', 'OrdersController@store')->name('orders.store');
         Route::get('orders', 'OrdersController@index')->name('orders.index');
         Route::get('orders/{order}', 'OrdersController@show')->name('orders.show');
+
+        //支付宝支付测试
+        Route::get('alipay', function() {
+            return app('alipay')->web([
+                'out_trade_no' => time(),
+                'total_amount' => '0.1',
+                'subject' => 'test subject - 测试',
+            ]);
+        });
+
     });
 });
 //收藏商品列表和商品详情列表参数冲突解决
