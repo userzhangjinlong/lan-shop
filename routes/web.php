@@ -46,15 +46,22 @@ Route::group(['middleware' => 'auth'], function() {
         Route::get('orders/{order}', 'OrdersController@show')->name('orders.show');
 
         //支付宝支付测试
-        Route::get('alipay', function() {
+        /*Route::get('alipay', function() {
             return app('alipay')->web([
                 'out_trade_no' => time(),
                 'total_amount' => '0.1',
                 'subject' => 'test subject - 测试',
             ]);
-        });
+        });*/
+
+        //支付
+        Route::get('payment/{order}/alipay', 'PaymentController@payByAlipay')->name('payment.alipay');
+        Route::get('payment/alipay/return', 'PaymentController@alipayReturn')->name('payment.alipay.return');
 
     });
 });
 //收藏商品列表和商品详情列表参数冲突解决
 Route::get('products/{product}', 'ProductsController@show')->name('products.show');
+
+//支付宝支付服务器回调
+Route::post('payment/alipay/notify','PaymentController@alipayNotify')->name('payment.alipay.notify');
