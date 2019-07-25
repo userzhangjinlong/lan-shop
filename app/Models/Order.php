@@ -41,7 +41,7 @@ class Order extends Model
      * @var array
      */
     protected $fillable = [
-        'no', 'address', 'total_amount', 'remark', 'paid_at', 'payment_method', 'payment_no', 'refund_status', 'closed', 'reviewed', 'ship_status', 'ship_data', 'extra'
+        'no', 'address', 'total_amount', 'remark', 'paid_at', 'payment_method', 'payment_no', 'refund_status', 'refund_no', 'closed', 'reviewed', 'ship_status', 'ship_data', 'extra'
     ];
 
     /**
@@ -124,7 +124,7 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
-    public function getAvailableRefundNo(){
+    public static function getAvailableRefundNo(){
         do{
             //Uuid可以用来生成大概率不重复的字符串
             $no = Uuid::uuid4()->getHex();

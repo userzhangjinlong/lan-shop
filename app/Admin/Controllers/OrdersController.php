@@ -262,15 +262,32 @@ class OrdersController extends Controller
         {
             case 'wechat':
                 //微信支付
+                $refundNo = Order::getAvailableRefundNo();
+                //调用微信退款
+                app('wechat_pay')->refund([
+                    'out_trade_no'  =>  $order->no,//订单流水号
+                    'totla_fee'     =>  $order->total_amount*100,//订单金额分
+                    'refund_fee'    =>  $order->total_amount*100,//要退款的金额,分
+                    'out_refund_no' =>  $refundNo,//退款单号
+                    //微信支付的退款结果不是实时返回的,而是通过退款回调来通知,因此这里需要配置上退款回调借口地址
+                    'notify_url'    =>  'http://requestbin.fullcontact.com/*****' //你的测试支付环境回到地址
+//                    'notify_url'    =>   route('payment.wechat.refund_notify'), //你的测试支付环境回到地址 最终正确路由回调退款
+                ]);
+
+                //将订单状态改为退款中
+                $order->update([
+                    'refund_no'     =>  $refundNo,
+                    'refund_status' => Order::REFUND_STATUS_PROCESSING,
+                ]);
                 break;
             case 'alipay':
-                $refundNo = $order->getAvailableRefundNo();
+                $refundNo = Order::getAvailableRefundNo();
                 //调用支付宝是咧的refund方法
-            $ret = app('alipay')->refund([
-                'out_trade_no'  =>  $order->no,//订单流水号
-                'refund_amount' =>  $order->total_amount,//退款金额
-                'out_request_no'=>  $refundNo,//退款订单号
-            ]);
+                $ret = app('alipay')->refund([
+                    'out_trade_no'  =>  $order->no,//订单流水号
+                    'refund_amount' =>  $order->total_amount,//退款金额
+                    'out_request_no'=>  $refundNo,//退款订单号
+                ]);
 
             //根据支付宝文档如果退款返回值里面有sub_code字段说嘛退款失败
             if ($ret->sub_code){

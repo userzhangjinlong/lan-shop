@@ -163,8 +163,46 @@ class PaymentController extends Controller
 
     }
 
+    /**
+     * 支付成功更新订单销量 评分等事件
+     * @param $order
+     */
     public function afterPaid($order){
         event(new OrderPaid($order));
+    }
+
+    /**
+     * 微信退款回调接口
+     * @param Request $request
+     * @return string
+     */
+    public function wechatRefundNotify(Request $request)
+    {
+        //给微信的失败响应
+        $failXml = '<xml><return_code><![CDATA[FAIL]]></return_code><return_msg><![CDATA[FAIL]]></return_msg></xml>';
+        $data = app('wechat_pay')->verify(null, true);
+
+        //没有找到对应的订单,保证代码健壮性
+        if (!$order = Order::where('no', $data['out_trade_no'])->first()){
+            return $failXml;
+        }
+
+        if ($data['refund_status'] === 'SUCCESS'){
+            //微信返回seccess 退款成功,修改订单退款成功状态
+            $order->update([
+                'refund_status'     =>      Order::REFUND_STATUS_SUCCESS,
+            ]);
+        }else{
+            //退款失败
+            $extra = $order->extra ?: [];
+            $extra['refund_failed_code'] = $data['refund_status'];
+            $order->update([
+                'refund_status'     =>  Order::REFUND_STATUS_FAILED,
+                'extra'             =>  $extra,
+            ]);
+        }
+
+        app('wechat_pay')->success();
     }
 
 }

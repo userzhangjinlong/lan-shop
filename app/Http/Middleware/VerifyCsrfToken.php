@@ -15,5 +15,6 @@ class VerifyCsrfToken extends Middleware
         //crsf白名单 添加路由不检测csrf
         'payment/alipay/notify',
         'payment/wecaht/notify',
+        'payment/wecaht/refund_notify',
     ];
 }
