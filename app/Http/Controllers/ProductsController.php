@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\InvalidRequestException;
+use App\Models\OrderItem;
 use App\Models\Product;
 use Illuminate\Http\Request;
 
@@ -72,7 +73,16 @@ class ProductsController extends Controller
             $favored = boolval($user->favoriteProducts()->find($product->id));
         }
 
-        return view('products.show', ['product' => $product, 'favored' => $favored]);
+        //订单商品的评价列表
+        $reviews = OrderItem::query()
+            ->with(['order.user', 'productSku'])
+            ->where('product_id', $product->id)
+            ->whereNotNull('reviewed_at')
+            ->orderBy('reviewed_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        return view('products.show', ['product' => $product, 'favored' => $favored, 'reviews' => $reviews]);
     }
 
     /**
@@ -105,6 +115,11 @@ class ProductsController extends Controller
         return [];
     }
 
+    /**
+     * 收藏列表
+     * @param Request $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
     public function favorites(Request $request){
         $products = $request->user()->favoriteProducts()->paginate(env('PAGINATE'));
         return view('products.favorites', ['products' => $products]);

@@ -176,6 +176,13 @@ class OrdersController extends Controller
         return $form;
     }
 
+    /**
+     * 订单发货
+     * @param Order $order
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     * @throws InvalidRequestException
+     */
     public function ship(Order $order, Request $request)
     {
         //判断当前订单是否已支付
