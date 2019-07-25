@@ -31,7 +31,7 @@ class AppServiceProvider extends ServiceProvider
             //支付回调路由设置
 //            $config['notify_url'] = route('payment.alipay.notify'); //服务器回调地址
             //https://requestbin.fullcontact.com 专门用于生成服务器零时使用地址的网址 生成一个48小时的随机网址获取回调地址参数保证功能正常使用gmt_create参数提交正常支付 本地环境
-            $config['notify_url'] = 'http://requestbin.fullcontact.com/1f64x5o1'; //服务器回调地址
+            $config['notify_url'] = 'http://requestbin.fullcontact.com/1h8n6451'; //服务器回调地址
             $config['return_url'] = route('payment.alipay.return'); //前段回调地址
             //判断当前项目运行环境是否为线上环境
             if (app()->environment() !== 'production'){
