@@ -108,44 +108,36 @@
 </div>
 <script>
     $(document).ready(function() {
-        // 不同意 按钮的点击事件
+        // 『不同意』按钮的点击事件
         $('#btn-refund-disagree').click(function() {
-            // Laravel-Admin 使用的 SweetAlert 版本与我们在前台使用的版本不一样，因此参数也不太一样
             swal({
-                    title: "输入拒绝退款理由",
-                    // text: "Your will not be able to recover this imaginary file!",
-                    type: "input",
-                    showCancelButton: true,
-                    // confirmButtonColor: "#DD6B55",
-                    confirmButtonText: "确认",
-                    cancelButtonText: "取消",
-                    closeOnConfirm: false,
-                    closeOnCancel: false
+                title: '输入拒绝退款理由',
+                input: 'text',
+                showCancelButton: true,
+                confirmButtonText: "确认",
+                cancelButtonText: "取消",
+                showLoaderOnConfirm: true,
+                preConfirm: function(inputValue) {
+                    if (!inputValue) {
+                        swal('理由不能为空', '', 'error')
+                        return false;
+                    }
+                    // Laravel-Admin 没有 axios，使用 jQuery 的 ajax 方法来请求
+                    return $.ajax({
+                        url: '{{ route('admin.orders.handle_refund', [$order->id]) }}',
+                        type: 'POST',
+                        data: JSON.stringify({   // 将请求变成 JSON 字符串
+                            agree: false,  // 拒绝申请
+                            reason: inputValue,
+                            // 带上 CSRF Token
+                            // Laravel-Admin 页面里可以通过 LA.token 获得 CSRF Token
+                            _token: LA.token,
+                        }),
+                        contentType: 'application/json',  // 请求的数据格式为 JSON
+                    });
                 },
-                function(inputValue){
-                    // if (isConfirm) {
-                        // swal("Deleted!", "Your imaginary file has been deleted.", "success");
-                        if (!inputValue) {
-                            swal('理由不能为空', '', 'error')
-                            return false;
-                        }
-                        return $.ajax({
-                            url: '{{ route('admin.orders.handle_refund', [$order->id]) }}',
-                            type: 'POST',
-                            data: JSON.stringify({   // 将请求变成 JSON 字符串
-                                agree: false,  // 拒绝申请
-                                reason: inputValue,
-                                // 带上 CSRF Token
-                                // Laravel-Admin 页面里可以通过 LA.token 获得 CSRF Token
-                                _token: LA.token,
-                            }),
-                            contentType: 'application/json',  // 请求的数据格式为 JSON
-                        });
-                    // } else {
-                    //     // swal("Cancelled", "Your imaginary file is safe :)", "error");
-                    //     return;
-                    // }
-                }).then(function (ret) {
+                allowOutsideClick: () => !swal.isLoading()
+            }).then(function (ret) {
                 // 如果用户点击了『取消』按钮，则不做任何操作
                 if (ret.dismiss === 'cancel') {
                     return;
@@ -160,18 +152,16 @@
             });
         });
 
-        // 同意 按钮的点击事件
+        // 『同意』按钮的点击事件
         $('#btn-refund-agree').click(function() {
-            // Laravel-Admin 使用的 SweetAlert 版本与我们在前台使用的版本不一样，因此参数也不太一样
             swal({
-                    title: '确认要将款项退还给用户？',
-                    type: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: "确认",
-                    cancelButtonText: "取消",
-                    showLoaderOnConfirm: true,
-                },
-                function(){
+                title: '确认要将款项退还给用户？',
+                type: 'warning',
+                showCancelButton: true,
+                confirmButtonText: "确认",
+                cancelButtonText: "取消",
+                showLoaderOnConfirm: true,
+                preConfirm: function() {
                     return $.ajax({
                         url: '{{ route('admin.orders.handle_refund', [$order->id]) }}',
                         type: 'POST',
@@ -181,7 +171,8 @@
                         }),
                         contentType: 'application/json',
                     });
-                }).then(function (ret) {
+                }
+            }).then(function (ret) {
                 // 如果用户点击了『取消』按钮，则不做任何操作
                 if (ret.dismiss === 'cancel') {
                     return;
@@ -195,7 +186,6 @@
                 });
             });
         });
-
 
     });
 </script>
