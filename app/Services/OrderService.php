@@ -9,8 +9,10 @@
 namespace App\Services;
 
 
+use App\Exceptions\CouponCodeUnavailableException;
 use App\Exceptions\InvalidRequestException;
 use App\Jobs\CloseOrder;
+use App\Models\CouponCode;
 use App\Models\Order;
 use App\Models\ProductSku;
 use App\Models\User;
@@ -19,10 +21,15 @@ use Carbon\Carbon;
 
 class OrderService
 {
-    public function store(User $user, UserAddress $address, $remark, $items)
+    public function store(User $user, UserAddress $address, $remark, $items, CouponCode $code=null)
     {
+        //如果传入了优惠券
+        if ($code){
+            $code->checkAvailable($user);
+        }
+
         //开始事物
-        $order = \DB::transaction(function() use ($user, $address, $remark, $items){
+        $order = \DB::transaction(function() use ($user, $address, $remark, $items, $code){
             //更新当前地址使用的最后时间
             $address->update(['last_used_at' => Carbon::now()]);
 
@@ -66,6 +73,18 @@ class OrderService
                 }
             }
 
+            if ($code){
+                //总金额已经计算出来了,检查是否符合优惠券规则
+                $code->checkAvailable($user, $totalAmount);
+                //把订单金额修改为优惠券金额
+                $totalAmount = $code->getAdjustedPrice($totalAmount);
+                //将优惠券与订单关联
+                $order->couponCode()->associate($code);
+                //增加优惠券用量
+                if ($code->changeUsed() <= 0){
+                    throw new CouponCodeUnavailableException('优惠券已经被使用完了哟!');
+                }
+            }
             //更新订单金额
             $order->update(['total_amount' => $totalAmount]);
 

@@ -62,6 +62,9 @@ Route::group(['middleware' => 'auth'], function() {
         Route::get('payment/alipay/return', 'PaymentController@alipayReturn')->name('payment.alipay.return');
         Route::get('payment/{order}/wechat', 'PaymentController@payByWechat')->name('payment.wechat');
 
+        //优惠券
+        Route::get('coupon_codes/{code}', 'CouponCodesController@show')->name('coupon_codes.show');
+
     });
 });
 //收藏商品列表和商品详情列表参数冲突解决

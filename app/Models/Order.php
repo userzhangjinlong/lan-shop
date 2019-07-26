@@ -41,7 +41,7 @@ class Order extends Model
      * @var array
      */
     protected $fillable = [
-        'no', 'address', 'total_amount', 'remark', 'paid_at', 'payment_method', 'payment_no', 'refund_status', 'refund_no', 'closed', 'reviewed', 'ship_status', 'ship_data', 'extra'
+        'no', 'address', 'total_amount', 'remark', 'paid_at', 'coupon_code_id', 'payment_method', 'payment_no', 'refund_status', 'refund_no', 'closed', 'reviewed', 'ship_status', 'ship_data', 'extra'
     ];
 
     /**
@@ -131,6 +131,14 @@ class Order extends Model
         }while(self::query()->where('refund_no', $no)->exists());
 
         return $no;
+    }
+
+    /**
+     * 订单关联优惠券
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function couponCode(){
+        return $this->belongsTo(CouponCode::class);
     }
 
 }
