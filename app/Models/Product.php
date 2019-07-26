@@ -41,4 +41,13 @@ class Product extends Model
         return \Storage::disk('public')->url($this->attributes['image']);
     }
 
+    /**
+     * 定义产品和分类的关联属性
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function catrgory()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
 }
