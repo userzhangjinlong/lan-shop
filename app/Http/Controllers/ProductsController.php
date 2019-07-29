@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\InvalidRequestException;
+use App\Models\Category;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Services\CategoryService;
 use Illuminate\Http\Request;
 
 class ProductsController extends Controller
@@ -12,9 +14,10 @@ class ProductsController extends Controller
     /**
      * 商品首页
      * @param Request $request
+     * @param CategoryService $categoryService
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
-    public function index(Request $request)
+    public function index(Request $request, CategoryService $categoryService)
     {
         //创建查询构造器
         $bulider = Product::where('on_sale', true);
@@ -29,6 +32,20 @@ class ProductsController extends Controller
                         $query->where('title', 'like', $like)->orWhere('description', 'like', $like);
                     });
             });
+        }
+
+        //如果有传入category_id字段,并且在数据库中有对应的类目
+        if ($request->input('category_id') && $category = Category::find($request->input('category_id'))){
+            //如果这是一个父分类
+            if ($category->is_directory){
+                //则筛选出该分分类下面的所有子分类的商品
+                $bulider->whereHas('category', function ($query) use ($category){
+                    $query->where('path', 'like', $category->path.$category->id.'-%');
+                });
+            }else{
+                //如果不是父分类直接筛选该分类下面的商品
+                $bulider->where('category_id', $category->id);
+            }
         }
 
         //是否有order参数，如果有就赋值给order， order控制商品排序规则
@@ -49,7 +66,10 @@ class ProductsController extends Controller
             'filters'  => [
                 'search' => $search,
                 'order'  => $order,
-            ]
+            ],
+            'category' => $category??null,
+            // 将类目树传递给模板文件
+            'categoryTree' => $categoryService->getCategoryTree(),
         ]);
     }
 

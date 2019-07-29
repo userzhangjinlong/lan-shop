@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Http\ViewComposers\CategoryTreeComposer;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Monolog\Logger;
 use Yansongda\Pay\Pay;
@@ -15,7 +17,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        //'products.index','products.show' 指定视图显示 *所有视图
+        View::composer(['*'], CategoryTreeComposer::class);
     }
 
     /**
