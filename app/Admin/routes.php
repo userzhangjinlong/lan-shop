@@ -42,4 +42,11 @@ Route::group([
     $router->delete('categories/{id}', 'CategoriesController@destory');
     $router->get('api/categories', 'CategoriesController@apiIndex');
 
+    //众筹商品
+    $router->get('crowdfunding_products', 'CrowdfundingProductsController@index');
+    $router->get('crowdfunding_products/create', 'CrowdfundingProductsController@create');
+    $router->get('crowdfunding_products/{id}/edit', 'CrowdfundingProductsController@edit');
+    $router->post('crowdfunding_products', 'CrowdfundingProductsController@store');
+    $router->put('crowdfunding_products/{id}', 'CrowdfundingProductsController@update');
+
 });
