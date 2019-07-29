@@ -45,7 +45,7 @@ class Product extends Model
      * 定义产品和分类的关联属性
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function catrgory()
+    public function category()
     {
         return $this->belongsTo(Category::class);
     }
