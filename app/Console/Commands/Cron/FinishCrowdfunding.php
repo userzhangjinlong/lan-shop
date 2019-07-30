@@ -66,6 +66,7 @@ class FinishCrowdfunding extends Command
             'status'    =>  CrowdfundingProduct::STATUS_FAIL,
         ]);
 
+
         //调用异步任务执行退款逻辑代码
         dispatch(new RefundCrowdfundingOrders($crowdfunding));
 

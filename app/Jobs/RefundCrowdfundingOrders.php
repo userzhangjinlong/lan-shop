@@ -43,7 +43,8 @@ class RefundCrowdfundingOrders implements ShouldQueue
         }
 
         //将定时任务中的退款失败代码加入到这儿
-        /*$orderService = app(OrderService::class);
+//        $orderService = app(OrderService::class); //这个硬起了错误到时候看看
+        $orderService = new OrderService();
         //查询出所有参与了此众筹订单
         Order::query()
             //类型为众筹
@@ -57,10 +58,11 @@ class RefundCrowdfundingOrders implements ShouldQueue
             ->each(function (Order $order) use ($orderService){
                 //调用订单退款逻辑
                 $orderService->refundOrder($order);
-            });*/
+            });
 
         // 将定时任务中的众筹失败退款代码移到这里
-        $orderService = app(OrderService::class);
+//        $orderService = app(OrderService::class);
+        /*$orderService = new OrderService();
 
         Order::query()
             ->where('type', Order::TYPE_CROWDFUNDING)
@@ -71,6 +73,6 @@ class RefundCrowdfundingOrders implements ShouldQueue
             ->get()
             ->each(function (Order $order) use ($orderService) {
                 $orderService->refundOrder($order);
-            });
+            });*/
     }
 }

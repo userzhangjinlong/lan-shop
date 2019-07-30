@@ -202,7 +202,7 @@ class OrderService
                 $ret = app('alipay')->refund([
                     'out_trade_no'  =>  $order->no,//订单流水号
                     'refund_amount' =>  $order->total_amount,//退款金额
-                    'out_request_no'=>  $refundNo,//退款订单号
+                    'out_request_no'=>  $refundNo//退款订单号
                 ]);
                 //根据支付宝文档如果退款返回值里面有sub_code字段说嘛退款失败
                 if ($ret->sub_code){
