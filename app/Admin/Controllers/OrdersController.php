@@ -5,8 +5,10 @@ namespace App\Admin\Controllers;
 use App\Exceptions\InternalExpection;
 use App\Exceptions\InvalidRequestException;
 use App\Http\Requests\Admin\HandleRefundRequest;
+use App\Models\CrowdfundingProduct;
 use App\Models\Order;
 use App\Http\Controllers\Controller;
+use App\Services\OrderService;
 use Encore\Admin\Controllers\HasResourceActions;
 use Encore\Admin\Form;
 use Encore\Admin\Grid;
@@ -197,6 +199,11 @@ class OrdersController extends Controller
             throw new InvalidRequestException('订单已发货');
         }
 
+        //众筹订单发货逻辑
+        if ($order->type === Order::TYPE_CROWDFUNDING && $order->items[0]->product->crowdfunding->status !== CrowdfundingProduct::STATUS_SUCCESS){
+            throw new InvalidRequestException('众筹订单需要在众筹成功之后发货哦!');
+        }
+
         //laravel5.5之后validate方法可以返回校验过的值
         $data = $this->validate($request, [
             'express_company' =>  ['required'],
@@ -217,7 +224,7 @@ class OrdersController extends Controller
         return redirect()->back();
     }
 
-    public function handleRefund(Order $order, HandleRefundRequest $request)
+    public function handleRefund(Order $order, HandleRefundRequest $request, OrderService $orderService)
     {
         //判断订单状态是否正确
         if ($order->refund_status !== Order::REFUND_STATUS_APPLIED){
@@ -234,7 +241,7 @@ class OrdersController extends Controller
                 'extra' =>  $extra,
             ]);
 
-            $this->_refundOrder($order);
+            $orderService->refundOrder($order);
         }else{
             //不同意
             $extra = $order->extra ?: [];
@@ -249,73 +256,5 @@ class OrdersController extends Controller
 
         return $order;
     }
-
-    /**
-     * 退款逻辑
-     * @param Order $order
-     * @throws InternalExpection
-     */
-    protected function _refundOrder(Order $order)
-    {
-        //判断订单的支付方式
-        switch ($order->payment_method)
-        {
-            case 'wechat':
-                //微信支付
-                $refundNo = Order::getAvailableRefundNo();
-                //调用微信退款
-                app('wechat_pay')->refund([
-                    'out_trade_no'  =>  $order->no,//订单流水号
-                    'totla_fee'     =>  $order->total_amount*100,//订单金额分
-                    'refund_fee'    =>  $order->total_amount*100,//要退款的金额,分
-                    'out_refund_no' =>  $refundNo,//退款单号
-                    //微信支付的退款结果不是实时返回的,而是通过退款回调来通知,因此这里需要配置上退款回调借口地址
-                    'notify_url'    =>  'http://requestbin.fullcontact.com/*****' //你的测试支付环境回到地址
-//                    'notify_url'    =>   route('payment.wechat.refund_notify'), //你的测试支付环境回到地址 最终正确路由回调退款
-                ]);
-
-                //将订单状态改为退款中
-                $order->update([
-                    'refund_no'     =>  $refundNo,
-                    'refund_status' => Order::REFUND_STATUS_PROCESSING,
-                ]);
-                break;
-            case 'alipay':
-                $refundNo = Order::getAvailableRefundNo();
-                //调用支付宝是咧的refund方法
-                $ret = app('alipay')->refund([
-                    'out_trade_no'  =>  $order->no,//订单流水号
-                    'refund_amount' =>  $order->total_amount,//退款金额
-                    'out_request_no'=>  $refundNo,//退款订单号
-                ]);
-
-            //根据支付宝文档如果退款返回值里面有sub_code字段说嘛退款失败
-            if ($ret->sub_code){
-                //将退款失败的保存进extra字段
-                $extra = $order->extra ?: [];
-                $extra['refund_failed_code'] = $ret->sub_code;
-
-                //将退款的订单标记为退款失败
-                $order->update([
-                    'refund_no'         =>  $refundNo,
-                    'refund_status'     =>  Order::REFUND_STATUS_FAILED,
-                    'extra'             =>  $extra,
-                ]);
-            }else{
-                //退款成功
-                $order->update([
-                    'refund_no'     =>  $refundNo,
-                    'refund_status' =>  Order::REFUND_STATUS_SUCCESS,
-                ]);
-            }
-            break;
-            default:
-                // 原则上不可能出现，这个只是为了代码健壮性
-                throw new InternalExpection('未知订单支付方式：'.$order->payment_method);
-                break;
-
-        }
-    }
-
 }
 

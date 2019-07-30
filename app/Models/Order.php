@@ -17,6 +17,9 @@ class Order extends Model
     const SHIP_STATUS_DELIVERED = 'delivered';
     const SHIP_STATUS_RECEIVED = 'received';
 
+    const TYPE_NORMAL = 'normal';
+    const TYPE_CROWDFUNDING = 'crowdfunding';
+
     /**
      * @var array
      */
@@ -41,7 +44,9 @@ class Order extends Model
      * @var array
      */
     protected $fillable = [
-        'no', 'address', 'total_amount', 'remark', 'paid_at', 'coupon_code_id', 'payment_method', 'payment_no', 'refund_status', 'refund_no', 'closed', 'reviewed', 'ship_status', 'ship_data', 'extra'
+        'no', 'address', 'total_amount', 'remark', 'paid_at', 'coupon_code_id',
+        'payment_method', 'payment_no', 'refund_status', 'refund_no', 'closed',
+        'reviewed', 'ship_status', 'ship_data', 'extra', 'type'
     ];
 
     /**

@@ -19,6 +19,11 @@ class UserAddress extends Model
     protected $dates = ['last_used_at'];
 
     /**
+     * @var array
+     */
+    protected $appends = ['full_address'];
+
+    /**
      * 一个地址只属于一个用户
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
