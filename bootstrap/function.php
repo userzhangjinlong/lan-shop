@@ -16,6 +16,11 @@ function route_class()
     return str_replace('.', '-', Route::currentRouteName());
 }
 
+/**
+ * @param $routeName
+ * @param array $parameters
+ * @return string
+ */
 function ngrok_url($routeName, $parameters = [])
 {
     //开发环境并且配置了NGORK_URL
@@ -25,4 +30,9 @@ function ngrok_url($routeName, $parameters = [])
     }
 
     return route($routeName, $parameters);
+}
+
+function big_number($number, $scale = 2)
+{
+    return new \Moontoast\Math\BigNumber($number, $scale);
 }
