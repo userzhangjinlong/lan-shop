@@ -11,7 +11,7 @@
                             <img class="cover" src="{{ $product->image_url }}" alt="">
                         </div>
                         <div class="col-sm-7">
-                            <div class="title">{{ $product->title }}</div>
+                            <div class="title">{{ $product->long_title ?: $product->title }}</div>
                             <!-- 众筹商品模块开始 -->
                             @if($product->type === \App\Models\Product::TYPE_CROWDFUNDING)
                                 <div class="crowdfunding-info">
@@ -105,6 +105,16 @@
                             <li role="presentation"><a href="#product-reviews-tab" aria-controls="product-reviews-tab" role="tab" data-toggle="tab">用户评价</a></li>
                         </ul>
                         <div class="tab-content">
+                            <!-- 产品属性开始 -->
+                            <div class="properties-list">
+                                <div class="properties-list-title">产品参数：</div>
+                                <ul class="properties-list-body">
+                                    @foreach($product->grouped_properties as $name => $value)
+                                        <li>{{ $name }}：{{ join(',', $value)  }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                            <!-- 产品属性结束 -->
                             <div role="tabpanel" class="tab-pane active" id="product-detail-tab">
                                 {!! $product->description !!}
                             </div>
