@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\OrderPaid;
 use App\Exceptions\InvalidRequestException;
 use App\Models\Installment;
+use App\Models\InstallmentItem;
 use App\Models\Order;
 use Carbon\Carbon;
 use Endroid\QrCode\QrCode;
@@ -96,6 +97,10 @@ class InstallmentsController extends Controller
         return view('pages.success', ['msg' => '付款成功']);
     }
 
+    /**
+     * 分期支付宝订单回调
+     * @return string
+     */
     public function alipayNotify()
     {
         //校验支付宝参数是否正确
@@ -159,7 +164,7 @@ class InstallmentsController extends Controller
     }
 
     /**
-     * 微信pc扫码支付
+     * 分期微信pc扫码支付
      * @param Installment $installment
      * @return \Illuminate\Contracts\Routing\ResponseFactory|\Symfony\Component\HttpFoundation\Response
      * @throws InvalidRequestException
@@ -189,6 +194,10 @@ class InstallmentsController extends Controller
         return response($qrCode->writeString(),200,['Content-Type' => $qrCode->getContentType()]);
     }
 
+    /**
+     * 分期微信支付回调
+     * @return string
+     */
     public function wechatNotify()
     {
         $data = app('wechat_pay')->verify();
@@ -199,6 +208,13 @@ class InstallmentsController extends Controller
         return 'fail';
     }
 
+    /**
+     * 分期支付微信订单逻辑
+     * @param $outTradeNo
+     * @param $paymentMethod
+     * @param $paymentNo
+     * @return bool
+     */
     protected function paid($outTradeNo, $paymentMethod, $paymentNo)
     {
         list($no, $sequence) = explode('_', $outTradeNo);
@@ -239,6 +255,50 @@ class InstallmentsController extends Controller
         });
 
         return true;
+    }
+
+    /**
+     * 分期微信退款回调
+     * @param Request $request
+     * @return string
+     */
+    public function wechatRefundNotify(Request $request)
+    {
+        //给微信失败的相应
+        $failXml = '<xml><return_code><![CDATA[FAIL]]></return_code><return_msg><![CDATA[FAIL]]></return_msg></xml>';
+        //校验微信回调参数
+        $data = app('wechat_pay')->verify(null,true);
+        //根据单号拆解出对应的商品对应退款单号以及期号
+        list($no, $sequence) = explode('_', $data['out_refund_no']);
+
+        $item = InstallmentItem::query()
+            ->with(['installment'])
+            ->whereHas('installment', function ($query) use ($no){
+                $query->whereHsd('order', function ($query) use ($no){
+                   $query->where('refund_no', $no);//根据订单退款流水号找到对应的还款计划
+                });
+            })
+            ->where('sequence', $sequence)
+            ->first();
+
+        //如果没有找到对应的还款计划
+        if (!$item){
+            return $failXml;
+        }
+
+        //如果退款成功
+        if ($data['refund_status'] === 'SUCCESS'){
+            //将退款计划修改为退款成功
+            $item->update(['refund_status' => InstallmentItem::REFUND_STATUS_SUCCESS]);
+
+            $item->installment->refreshRefundStatus();
+        }else{
+            //对应的还款计划失败
+            $item->update(['refund_status' => InstallmentItem::REFUND_STATUS_FAILED]);
+        }
+
+        return app('wechat_pay')->success();
+
     }
 
 }

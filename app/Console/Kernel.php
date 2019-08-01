@@ -28,6 +28,8 @@ class Kernel extends ConsoleKernel
         //          ->hourly();
         //新增众筹订单退款定时任务
         $schedule->command('cron:finish-crowdfunding')->everyMinute();
+        //daily()代表每天凌晨00:00执行
+        $schedule->command('cron:calculate-installment-fine')->daily();
     }
 
     /**
