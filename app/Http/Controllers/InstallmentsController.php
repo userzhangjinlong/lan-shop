@@ -7,6 +7,7 @@ use App\Exceptions\InvalidRequestException;
 use App\Models\Installment;
 use App\Models\Order;
 use Carbon\Carbon;
+use Endroid\QrCode\QrCode;
 use Illuminate\Http\Request;
 
 class InstallmentsController extends Controller
@@ -155,6 +156,89 @@ class InstallmentsController extends Controller
 
         return app('alipay')->success();
 
+    }
+
+    /**
+     * 微信pc扫码支付
+     * @param Installment $installment
+     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Symfony\Component\HttpFoundation\Response
+     * @throws InvalidRequestException
+     */
+    public function payByWechat(Installment $installment)
+    {
+        if ($installment->order->closed){
+            throw new InvalidRequestException('对应的商品订单已关闭');
+        }
+        if ($installment->status === Installment::STATUS_FINFSHED){
+            throw new InvalidRequestException('分期订单已结清');
+        }
+        if (!$nextItem = $installment->items()->whereNull('paid_at')->orderBy('sequence')->first()){
+            throw new InvalidRequestException('分期订单已结清');
+        }
+
+        $wechatOrder = app('wechat_pay')->scan([
+            'out_trade_no'  =>  $installment->no.'_'.$nextItem->sequence,
+            'total_fee'     =>  $nextItem->total*100,
+            'body'          =>  '支付Lan-Shop商城分期订单:'.$installment->no,
+            'notify_url'    =>   ngrok_url('installments.wechat.notify')
+        ]);
+        //把要转换的字符串作为QrCode的构造参数
+        $qrCode = new QrCode($wechatOrder->code_url);
+
+        //将生成的二维码图片以字符串形式输出,并带上相应的类型
+        return response($qrCode->writeString(),200,['Content-Type' => $qrCode->getContentType()]);
+    }
+
+    public function wechatNotify()
+    {
+        $data = app('wechat_pay')->verify();
+        if ($this->paid($data->out_trade_no, 'wechat', $data->transaction_id)){
+            return app('wechat_pay')->success();
+        }
+
+        return 'fail';
+    }
+
+    protected function paid($outTradeNo, $paymentMethod, $paymentNo)
+    {
+        list($no, $sequence) = explode('_', $outTradeNo);
+        if (!$installment = Installment::where('no', $no)->first()){
+            return false;
+        }
+
+        if (!$item = $installment->items()->where('sequence', $sequence)->first()){
+            return false;
+        }
+
+        if ($item->paid_at){
+            return true;
+        }
+
+        \DB::transaction(function() use ($paymentNo, $paymentMethod, $no, $installment, $item){
+            $item->update([
+                'paid_at'       =>  Carbon::now(),
+                'payment_method'=>  $paymentMethod,
+                'payment_no'    =>  $paymentNo
+            ]);
+
+            if ($item->sequence === 0){
+                //首次支付分期款
+                $installment->update(['status' => Installment::STATUS_REPAYING]);
+                $installment->order->update([
+                    'paid_at'       =>  Carbon::now(),
+                    'payment_method'=>  'installment',
+                    'payment_no'    =>  $no
+                ]);
+                event(new OrderPaid($installment->order));
+            }
+
+            if ($item->sequence === $installment->count -1){
+                $installment->update(['status' => Installment::STATUS_FINFSHED]);
+            }
+
+        });
+
+        return true;
     }
 
 }
