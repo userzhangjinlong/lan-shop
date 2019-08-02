@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Monolog\Logger;
 use Yansongda\Pay\Pay;
+use Elasticsearch\ClientBuilder as ESClientBuilder;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -31,7 +32,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //往服务容器中注入一个名为alipay的单列对象
+
+        /**
+         * 往服务容器中注入一个名为alipay的单列对象
+         */
         $this->app->singleton('alipay', function (){
             $config = config('pay.alipay');
             //支付回调路由设置
@@ -52,7 +56,9 @@ class AppServiceProvider extends ServiceProvider
             return Pay::alipay($config);
         });
 
-        //往服务容器中注入一个名为wechat_pay的单列对象
+        /**
+         * 往服务容器中注入一个名为wechat_pay的单列对象
+         */
         $this->app->singleton('wechat_pay', function(){
             $config = config('pay.wechat');
             //微信支付成功回调地址
@@ -67,5 +73,21 @@ class AppServiceProvider extends ServiceProvider
 
             return Pay::wechat($config);
         });
+
+        /**
+         * 注册一个名为 es 的单例对象
+         */
+        $this->app->singleton('es', function (){
+            //从配置文件中读取Elasticsearch的服务器hosts列表
+            $bulider = ESClientBuilder::create()->setHosts(config('app.elasticsearch.hosts'));
+            //如果是开发环境
+            if ($this->app->environment() === 'local'){
+                //配置日志,Elasticsearch的请求和返回数据将打印到日志文件中,方便我们调试.
+                $bulider->setLogger(app('log')->getMonolog());
+            }
+
+            return $bulider->build();
+        });
+
     }
 }
