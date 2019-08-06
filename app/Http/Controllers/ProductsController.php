@@ -6,6 +6,7 @@ use App\Exceptions\InvalidRequestException;
 use App\Models\Category;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\SearchBuilders\ProductSearchBuilder;
 use App\Services\CategoryService;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -23,96 +24,23 @@ class ProductsController extends Controller
         $page = $request->input('page', 1);
         $perPage = env('PAGINATE');
 
-        //构建查询
-        $params = [
-            'index' => 'products',
-            'type'  =>  '_doc',
-            'body'  =>  [
-                'from'  =>  ($page - 1)*$perPage,
-                'size'  =>  $perPage,
-                'query' =>  [
-                    'bool'  =>  [
-                        'filter'    =>  [
-                            ['term' => ['on_sale' => true]],
-                        ],
-                    ],
-                ]
-            ],
-        ];
+        //新建查询构造器对象,设置只搜索上架商品, 设置分页
+        $bulider = (new ProductSearchBuilder())->onSale()->paginate($perPage, $page);
 
-        //是否有提交order参数,如果有就赋值给$order变量
-        //是否有order参数，如果有就赋值给order， order控制商品排序规则
-        if ($order = $request->input('order')){
-            //是否以_asc 或者 _desc结尾
-            if (preg_match('/^(.+)_(asc|desc)$/', $order, $m)){
-                //如果字符串的开头是三个字符串之一，说明是一个合法的排序值
-                if (in_array($m[1], ['price', 'sold_count', 'rating'])){
-                    $params['body']['sort'] = [[$m[1] => $m[2]]];
-                }
-            }
-        }
-
-        //如果有传入category_id字段,并且在数据库中有对应的类目
         if ($request->input('category_id') && $category = Category::find($request->input('category_id'))){
-            //如果这是一个父分类 则使用 category_path 来筛选
-            if ($category->is_directory){
-                //则筛选出该分分类下面的所有子分类的商品
-                $params['body']['query']['bool']['filter'][] = [
-                    'prefix' => ['category_path' => $category->path.$category->id.'-'],
-                ];
-            }else{
-                //如果不是父分类 直接筛选category_id
-                $params['body']['query']['bool']['filter'][] = ['term' => ['category_id' => $category->id]];
-            }
+            //调用分类查询构造器
+            $bulider->category($category);
         }
 
-        //判断是否有search参数的提交，如果有赋值给$search变量 search参数用于模糊搜索商品
         if ($search = $request->input('search', '')){
-            //将搜索词根据空格拆分成数组,并过滤掉空项
             $keywords = array_filter(explode(' ', $search));
-            foreach ($keywords as $keyword){
-                $params['body']['query']['bool']['must'] = [
-                    'multi_match' => [
-                        'query'     => $keyword,
-                        'fields'    => [
-                            'title^3',
-                            'long_title^2',
-                            'category^2',//分类名称
-                            'description',
-                            'skus_title',
-                            'skus_description',
-                            'properties_value',
-                        ],
-                    ],
-                ];
-            }
+            //调用搜索关键词构造器
+            $bulider->keywords($keywords);
         }
 
-        //分面搜索
-        // 只有当用户有输入搜索词或者使用了类目筛选的时候才会做聚合
         if ($search || isset($category)){
-            $params['body']['aggs'] = [
-                'properties' => [
-                    'nested' => [
-                        'path' => 'properties',
-                    ],
-                    'aggs' => [
-                        'properties' => [
-                            'terms' => [
-                                'field' => 'properties.name',
-                            ],
-                            'aggs' => [
-                                'value' => [
-                                    'terms' => [
-                                        'field' => 'properties.value',
-                                    ],
-                                ],
-                            ],
-                        ],
-                    ],
-                ],
-
-            ];
+            //调用查询构造器分面搜索
+            $bulider->aggregateProperties();
         }
 
         //从用户请求参数获取filters
@@ -127,23 +55,29 @@ class ProductsController extends Controller
                 //将用户筛选的属性添加到数组中
                 $propertyFilters[$name] = $value;
 
-                //添加到filter类型中
-                $params['body']['query']['bool']['filter'][] = [
-                    //由于我们要筛选的是nested类型下的属性,因此需要用nested查询
-                    'nested' => [
-                        //指明nested字段
-                        'path' => 'properties',
-                        'query' => [
-                            ['term' => ['properties.name' => $name]],
-                            ['term' => ['properties.value' => $value]],
-                        ],
-                    ],
-                ];
+                //调用查询构造器属性筛选
+                $bulider->propertyFilter($name, $value);
             }
         }
 
 
-        $result = app('es')->search($params);
+
+
+        //是否有提交order参数,如果有就赋值给$order变量
+        //是否有order参数，如果有就赋值给order， order控制商品排序规则
+        if ($order = $request->input('order')){
+            //是否以_asc 或者 _desc结尾
+            if (preg_match('/^(.+)_(asc|desc)$/', $order, $m)){
+                //如果字符串的开头是三个字符串之一，说明是一个合法的排序值
+                if (in_array($m[1], ['price', 'sold_count', 'rating'])){
+                    //调用构造器排序
+                    $bulider->orderBy($m[1], $m[2]);
+                }
+            }
+        }
+
+
+        $result = app('es')->search($bulider->getParams());
 
         $properties = [];
         //如果返回结果里有aggregations字段,说明做了分面搜索
