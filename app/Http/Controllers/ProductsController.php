@@ -8,6 +8,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\SearchBuilders\ProductSearchBuilder;
 use App\Services\CategoryService;
+use App\Services\ProductService;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -100,10 +101,11 @@ class ProductsController extends Controller
         //通过collect函数将返回结果转为集合 并通过集合的pluck方法取到返回的商品id数组
         $productIds = collect($result['hits']['hits'])->pluck('_id')->all();
 
-        $products = Product::whereIn('id', $productIds)
+        /*$products = Product::whereIn('id', $productIds)
             //orderByRaw 可以让我们用原生的sql来给查询结果排序
             ->orderByRaw(sprintf("FIND_IN_SET(id, '%s')", join(',', $productIds)))
-            ->get();
+            ->get();*/
+        $products = Product::query()->byIds($productIds)->get();
 
         //返回一个LengthAwarePaginator对象
         $pager = new LengthAwarePaginator($products, $result['hits']['total'], $perPage, $page, [
@@ -187,7 +189,32 @@ class ProductsController extends Controller
             ->limit(10)
             ->get();
 
-        return view('products.show', ['product' => $product, 'favored' => $favored, 'reviews' => $reviews]);
+
+        /*//创建一个查询构造器,只搜索上架的商品,取搜索结果的前4个商品
+        $bulider = (new ProductSearchBuilder())->onSale()->paginate(4,1);
+        //遍历当前商品的属性
+        foreach ($product->properties as $property){
+            //添加到should条件中
+            $bulider->propertyFilter($property->name, $property->value, 'should');
+        }
+        //设置最少匹配一半属性
+        $bulider->minShouldMatch(ceil(count($product->properties)/2));
+        $params = $bulider->getParams();
+        //同时将当前商品的id排除
+        $params['body']['query']['bool']['must_not'] = [['term' => ['_id' => $product->id]]];
+        //搜索
+        $result = app('es')->search($params);
+        $similarProductIds = collect($result['hits']['hits'])->pluck('_id')->all();*/
+        $similarProductIds = (new ProductService())->getSimilarProductIds($product, 4);
+        //根据Elasticsearch搜索出来的商品id从数据库中读取商品数据
+        /*$similarProducts = Product::query()
+            ->whereIn('id', $similarProductIds)
+            ->orderByRaw(sprintf("FIND_IN_SET(id, '%s')", join(' ', $similarProductIds)))
+            ->get();*/
+        $similarProducts = Product::query()->byIds($similarProductIds)->get();
+
+
+        return view('products.show', ['product' => $product, 'favored' => $favored, 'reviews' => $reviews, 'similar' => $similarProducts]);
     }
 
     /**

@@ -130,4 +130,15 @@ class Product extends Model
         return $arr;
     }
 
+    /**
+     * 返回以id排序的sql操作
+     * @param $query
+     * @param $ids
+     * @return mixed
+     */
+    public function scopeByIds($query, $ids)
+    {
+        return $query->whereIn('id', $ids)->orderByRaw(sprintf("FIND_IN_SET(id, '%s')", join(',', $ids)));
+    }
+
 }
