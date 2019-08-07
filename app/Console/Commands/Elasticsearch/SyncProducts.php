@@ -8,11 +8,12 @@ use Illuminate\Console\Command;
 class SyncProducts extends Command
 {
     /**
+     *  添加一个名为 index，默认值为 products 的参数
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'es:sync-products';
+    protected $signature = 'es:sync-products {--index=products}';
 
     /**
      * The console command description.
@@ -57,7 +58,7 @@ class SyncProducts extends Command
 
                 $req['body'][] = [
                     'index' =>  [
-                        '_index' => 'products',
+                        '_index' => $this->option('index'),
                         '_type'  => '_doc',
                         '_id'     => $data['id'],
                     ],
