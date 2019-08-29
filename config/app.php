@@ -132,7 +132,7 @@ return [
     /**
      * 订单过期时间 秒
      */
-    'order_ttl' => 30,
+    'order_ttl' => 900,
 
     /**
      * 分期费率key期数,value费率
