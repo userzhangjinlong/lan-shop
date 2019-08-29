@@ -61,7 +61,10 @@ class CloseOrder implements ShouldQueue
             }
 
             //关闭订单减少优惠券的使用量
-            $this->order->couponCode->changeUsed(false);
+            if ($this->order->couponCode){
+                $this->order->couponCode->changeUsed(false);
+            }
+
 
         });
 
