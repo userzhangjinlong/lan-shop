@@ -135,6 +135,11 @@ return [
     'order_ttl' => 900,
 
     /**
+     * 秒杀订单过期时间 秒
+     */
+    'seckill_order_ttl' => 300,
+
+    /**
      * 分期费率key期数,value费率
      */
     'installment_fee_rate'  =>  [

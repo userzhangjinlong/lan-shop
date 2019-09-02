@@ -168,6 +168,48 @@ class OrderService
         return $order;
     }
 
+    public function seckill(User $user, UserAddress $address, ProductSku $sku)
+    {
+        $order = \DB::transaction(function () use ($user, $address, $sku){
+            //更新当前地址的最后使用时间
+            $address->update(['last_used_at' => Carbon::now()]);
+            //创建秒杀订单
+            $order = new Order([
+                'address' => [
+                    'address' => $address->full_address,
+                    'zip'     => $address->zip,
+                    'contact_name' => $address->contact_name,
+                    'contact_phone' => $address->contact_phone,
+                ],
+                'remark' => '',
+                'total_amount' => $sku->price,
+                'type' => Order::TYPE_SECKILL,
+            ]);
+            //订单关联到当前用户
+            $order->user()->associate($user);
+            //写入数据库
+            $order->save();
+            //创建一个新的订单项并且与sku关联
+            $item = $order->items()->make([
+                'amount' => 1,//秒杀订单限购一份
+                'price' => $sku->price,
+            ]);
+            $item->product()->associate($sku->product_id);
+            $item->productSku()->associate($sku);
+            $item->save();
+            //扣减对应的sku库存
+            if ($sku->decreaseStock(1) <= 0){
+                throw new InvalidRequestException('该商品库存不足');
+            }
+
+            return $order;
+        });
+        //秒杀商品的自动关闭时间与普通订单不同
+        dispatch(new CloseOrder($order, config('app.seckill_order_ttl')));
+
+        return $order;
+    }
+
     /**
      * 订单退款
      * @param Order $order

@@ -19,6 +19,7 @@ class Order extends Model
 
     const TYPE_NORMAL = 'normal';
     const TYPE_CROWDFUNDING = 'crowdfunding';
+    const TYPE_SECKILL = 'seckill';
 
     /**
      * @var array
@@ -38,6 +39,15 @@ class Order extends Model
         self::SHIP_STATUS_PENDING => '未发货',
         self::SHIP_STATUS_DELIVERED => '已发货',
         self::SHIP_STATUS_RECEIVED => '已收货'
+    ];
+
+    /**
+     * @var array
+     */
+    public static $typeMap = [
+        self::TYPE_NORMAL => '普通订单',
+        self::TYPE_CROWDFUNDING => '众筹订单',
+        self::TYPE_SECKILL => '秒杀订单',
     ];
 
     /**

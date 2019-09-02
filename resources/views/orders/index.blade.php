@@ -57,7 +57,12 @@
                                                                 已关闭
                                                             @else
                                                                 未支付<br>
-                                                                请于 {{ $order->created_at->addSeconds(config('app.order_ttl'))->format('H:i') }} 前完成支付<br>
+                                                                @if($order->type === 'seckill')
+                                                                    请于 {{ $order->created_at->addSeconds(config('app.seckill_order_ttl'))->format('H:i') }} 前完成支付<br>
+                                                                    @else
+                                                                    请于 {{ $order->created_at->addSeconds(config('app.order_ttl'))->format('H:i') }} 前完成支付<br>
+                                                                @endif
+
                                                                 否则订单将自动关闭
                                                             @endif
                                                         </td>
