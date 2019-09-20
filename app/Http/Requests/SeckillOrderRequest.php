@@ -2,10 +2,12 @@
 
 namespace App\Http\Requests;
 
+use App\Exceptions\InvalidRequestException;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductSku;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class SeckillOrderRequest extends Request
@@ -34,14 +36,26 @@ class SeckillOrderRequest extends Request
             'sku_id' => [
                 'required',
                 function ($attribute, $value, $fail){
-                    if (!$sku = ProductSku::find($value)){
+                    /*if (!$sku = ProductSku::find($value)){
+                        return $fail('该商品不存在');
+                    }*/
+                    //库存改为从redis中取出
+                    $stock = \Redis::get('seckill_sku_'.$value);
+                    //如果是null代表这个sku不是秒杀商品
+                    if (is_null($stock)){
                         return $fail('该商品不存在');
                     }
 
-                    if ($sku->product->type != Product::TYPE_SECKILL){
-                        return $fail('该商品不支持秒杀');
+                    if ($stock < 1){
+                        return $fail('该商品已售完');
                     }
 
+                    /*if ($sku->product->type != Product::TYPE_SECKILL){
+                        return $fail('该商品不支持秒杀');
+                    }*/
+                    // 大多数用户在上面的逻辑里就被拒绝了
+                    // 因此下方的 SQL 查询不会对整体性能有太大影响
+                    $sku = ProductSku::find($value);
                     if ($sku->product->seckill->is_before_start){
                         return $fail('秒杀活动尚未开始');
                     }
@@ -54,8 +68,13 @@ class SeckillOrderRequest extends Request
                         return $fail('商品尚未上架');
                     }
 
-                    if ($sku->stock < 1){
-                        return $fail('商品已售完');
+                    //新增判断是否登录
+                    if (!$user = Auth::user()){
+                        throw new InvalidRequestException('请先登录');
+                    }
+
+                    if (!$user->email_verified_at){
+                        throw new InvalidRequestException('请先验证邮箱');
                     }
 
                     if ($order = Order::query()

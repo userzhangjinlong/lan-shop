@@ -182,9 +182,10 @@ class OrderService
             //更新当前地址的最后使用时间
 //            $address->update(['last_used_at' => Carbon::now()]);
             //扣减对应的sku库存
-            if ($sku->decreaseStock(1) <= 0){
+            /*if ($sku->decreaseStock(1) <= 0){
                 throw new InvalidRequestException('该商品库存不足');
-            }
+            }*/
+
             //创建秒杀订单
             $order = new Order([
                 'address' => [
@@ -213,7 +214,8 @@ class OrderService
             $item->product()->associate($sku->product_id);
             $item->productSku()->associate($sku);
             $item->save();
-
+            //从redis扣减对应的库存
+            \Redis::decr('seckill_sku_'.$sku->id);
             return $order;
         });
         //秒杀商品的自动关闭时间与普通订单不同

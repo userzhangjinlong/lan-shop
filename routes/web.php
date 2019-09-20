@@ -14,7 +14,7 @@
 Route::get('/', 'PagesController@root')->name('root');
 //商品列表
 Route::get('products', 'ProductsController@index')->name('products.index');
-
+Route::post('seckill_orders', 'OrdersController@seckill')->name('seckill_orders.store');
 Auth::routes();
 Route::group(['middleware' => 'auth'], function() {
     //用户邮箱验证
@@ -49,7 +49,6 @@ Route::group(['middleware' => 'auth'], function() {
         Route::post('orders/{order}/review', 'OrdersController@sendReview')->name('orders.review.store');
         Route::post('orders/{order}/apply_refund', 'OrdersController@applyRefund')->name('orders.apply_refund');
         Route::post('crowdfunding_orders', 'OrdersController@crowdfunding')->name('crowdfunding_orders.store');
-        Route::post('seckill_orders', 'OrdersController@seckill')->name('seckill_orders.store');
         //支付宝支付测试
         /*Route::get('alipay', function() {
             return app('alipay')->web([
