@@ -6,6 +6,7 @@ use App\Http\ViewComposers\CategoryTreeComposer;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Monolog\Logger;
 use Yansongda\Pay\Pay;
 use Elasticsearch\ClientBuilder as ESClientBuilder;
@@ -23,6 +24,14 @@ class AppServiceProvider extends ServiceProvider
         View::composer(['*'], CategoryTreeComposer::class);
         //将carbon对象的diffForHumans返回中文
         Carbon::setLocale('zh');
+
+        //本地环境记录mysql慢日志查询
+        if (app()->environment('local')){
+            \DB::listen(function ($query){
+                \Log::info(Str::replaceArray('?',$query->bindings, $query->sql));
+            });
+        }
+
     }
 
     /**
