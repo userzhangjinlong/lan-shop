@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\ProductSku;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\Rule;
 
 class SeckillOrderRequest extends Request
@@ -40,7 +41,7 @@ class SeckillOrderRequest extends Request
                         return $fail('该商品不存在');
                     }*/
                     //库存改为从redis中取出
-                    $stock = \Redis::get('seckill_sku_'.$value);
+                    $stock = Redis::get('seckill_sku_'.$value);
                     //如果是null代表这个sku不是秒杀商品
                     if (is_null($stock)){
                         return $fail('该商品不存在');
@@ -72,8 +73,7 @@ class SeckillOrderRequest extends Request
                     if (!$user = Auth::user()){
                         throw new InvalidRequestException('请先登录');
                     }
-
-                    if (!$user->email_verified_at){
+                    if (!$user->email_verified){
                         throw new InvalidRequestException('请先验证邮箱');
                     }
 

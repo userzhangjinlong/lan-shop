@@ -8,6 +8,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Support\Facades\Redis;
 
 /**
  * 代表这个类需要被放到队列中执行，而不是触发时立即执行
@@ -61,7 +62,7 @@ class CloseOrder implements ShouldQueue
                 //当前订单类型是秒杀订单,并且对应商品是上架且尚未到截止时间
                 if ($item->order->type === Order::TYPE_SECKILL && $item->product->on_sale && !$item->product->seckill->is_after_end){
                     //将redis中的库存+1
-                    \Redis::incr('seckill_sku_'.$item->productSku->id);
+                    Redis::incr('seckill_sku_'.$item->productSku->id);
                 }
             }
 
