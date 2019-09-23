@@ -14,7 +14,7 @@
 Route::get('/', 'PagesController@root')->name('root');
 //商品列表
 Route::get('products', 'ProductsController@index')->name('products.index');
-Route::post('seckill_orders', 'OrdersController@seckill')->name('seckill_orders.store');
+Route::post('seckill_orders', 'OrdersController@seckill')->name('seckill_orders.store')->middleware('random_drop:80'); //百分比限流
 Auth::routes();
 Route::group(['middleware' => 'auth'], function() {
     //用户邮箱验证
