@@ -12,6 +12,21 @@ Route::group([
     $router->get('/', 'HomeController@index');
     //用户管理
     $router->get('users', 'UsersController@index');
+
+    //广告管理
+    $router->get('advs', 'AdvsController@index');
+    $router->get('advs/create', 'AdvsController@create');
+    $router->post('advs', 'AdvsController@store');
+    $router->get('advs/{id}/edit', 'AdvsController@edit');
+    $router->put('advs/{id}', 'AdvsController@update');
+    $router->delete('advs/{id}', 'AdvsController@destory');
+    $router->get('api/advs', 'AdvsController@apiIndex');
+
+    //广告图片管理
+    $router->get('advimages/{advid}', 'AdvImageController@index');
+    $router->get('advimages/{advid}/create', 'AdvImageController@create');
+    $router->post('advimages/{advid}', 'AdvImageController@store');
+
     //商品管理
     $router->get('products', 'ProductController@index');
     $router->get('products/create', 'ProductController@create');

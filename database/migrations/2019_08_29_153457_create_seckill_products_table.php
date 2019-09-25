@@ -16,7 +16,7 @@ class CreateSeckillProductsTable extends Migration
         Schema::create('seckill_products', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('product_id')->comment('产品表id');
-            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+//            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
             $table->dateTime('start_at')->comment('开始时间');
             $table->dateTime('end_at')->comment('结束时间');
         });
