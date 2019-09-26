@@ -11,6 +11,7 @@ use Encore\Admin\Grid;
 use Encore\Admin\Layout\Content;
 use Encore\Admin\Show;
 use function foo\func;
+use Illuminate\Http\Request;
 
 class AdvImageController extends Controller
 {
@@ -25,8 +26,7 @@ class AdvImageController extends Controller
     public function index(Content $content)
     {
         return $content
-            ->header('Index')
-            ->description('description')
+            ->header('广告图管理')
             ->body($this->grid());
     }
 
@@ -94,6 +94,9 @@ class AdvImageController extends Controller
         });
         $grid->start_at('开始时间');
         $grid->end_at('结束时间');
+        $grid->actions(function ($actions){
+            $actions->disableview();
+        });
 
         return $grid;
     }
@@ -129,14 +132,14 @@ class AdvImageController extends Controller
     protected function form()
     {
         $form = new Form(new AdvImage);
-
         $form->text('name', '广告名称')->rules('required');
         $form->select('adv_id', '广告位')->options(function ($id){
             $adv = Adv::find($id);
             if ($adv){
-                return [$adv->id = $adv->name];
+                return [$adv->id => $adv->name];
             }
         })->ajax('/admin/api/advs');
+
         $form->datetime('start_at', '开始时间')->default(date('Y-m-d H:i:s'))->rules('required|date');
         $form->datetime('end_at', '开始时间')->default(date('Y-m-d H:i:s', strtotime('+1 year')))->rules('required|date');
         $form->image('image', '上传图片')->rules('required|image');
@@ -146,4 +149,16 @@ class AdvImageController extends Controller
 
         return $form;
     }
+
+    /**
+     * @param AdvImage $advImage
+     * @param $adv_id
+     * @param $id
+     * @return mixed
+     */
+    public function destory(AdvImage $advImage, $adv_id, $id)
+    {
+        return $advImage->where('id', $id)->delete();
+    }
+
 }

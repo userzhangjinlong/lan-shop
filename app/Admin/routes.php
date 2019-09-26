@@ -26,6 +26,9 @@ Route::group([
     $router->get('advimages/{advid}', 'AdvImageController@index');
     $router->get('advimages/{advid}/create', 'AdvImageController@create');
     $router->post('advimages/{advid}', 'AdvImageController@store');
+    $router->get('advimages/{advid}/{id}/edit','AdvImageController@edit');
+    $router->put('advimages/{advid}/{id}', 'AdvImageController@update');
+    $router->delete('advimages/{advid}/{id}', 'AdvImageController@destory');
 
     //商品管理
     $router->get('products', 'ProductController@index');
