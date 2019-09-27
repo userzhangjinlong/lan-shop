@@ -57,7 +57,7 @@ class AdvImageController extends Controller
         return $content
             ->header('Edit')
             ->description('description')
-            ->body($this->form()->edit($id));
+            ->body($this->form()->edit( $id));
     }
 
     /**
@@ -96,6 +96,8 @@ class AdvImageController extends Controller
         $grid->end_at('结束时间');
         $grid->actions(function ($actions){
             $actions->disableview();
+            $actions->disableedit();
+            $actions->append('<a class="grid-row-view" href="'.$actions->getkey().'/edit"><i class="fa fa-edit"></i></a>');
         });
 
         return $grid;
@@ -132,6 +134,7 @@ class AdvImageController extends Controller
     protected function form()
     {
         $form = new Form(new AdvImage);
+
         $form->text('name', '广告名称')->rules('required');
         $form->select('adv_id', '广告位')->options(function ($id){
             $adv = Adv::find($id);
