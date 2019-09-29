@@ -3,38 +3,36 @@
 
 @section('content')
     <div class="container">
-
-        <div id="carousel-example-generic" class="carousel slide center-block" data-ride="carousel">
-            <!-- Indicators -->
-            <ol class="carousel-indicators">
-                @foreach($banner_list as $k => $v)
-                    <li data-target="#carousel-example-generic" data-slide-to="{{ $k }}" @if($k == 0) class="active" @endif></li>
-                @endforeach
-            </ol>
-
-            <!-- Wrapper for slides -->
-            <div class="carousel-inner" role="listbox">
-                    @foreach($banner_list as $k => $v)
-                    <div class="item @if($k == 0)  class="active" @endif"">
-                        <img src="{{ $v->image_url }}" >
-                        <div class="carousel-caption">
-                        </div>
-                    </div>
-                    @endforeach
-            </div>
-
-            <!-- Controls -->
-            <a class="left carousel-control" href="#carousel-example-generic" role="button" data-slide="prev">
-                <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
-                <span class="sr-only">Previous</span>
-            </a>
-            <a class="right carousel-control" href="#carousel-example-generic" role="button" data-slide="next">
-                <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
-                <span class="sr-only">Next</span>
-            </a>
-        </div>
-
         <!--二级菜单、图片轮播-->
+            <div class="row">
+                <div id="carousel-explorer" class="carousel slide" data-ride="carousel">
+                    <ol class="carousel-indicators">
+                        @foreach($banner_list as $k => $v)
+                        <li data-target="#carousel-explorer" data-slide-to="{{ $k }}" @if($k == 0) class="active" @endif></li>
+                        @endforeach
+                    </ol>
+
+                    <div class="carousel-inner" role="listbox">
+
+                        @foreach($banner_list as $k => $v)
+                        <div class="item @if($k == 0)  active @endif">
+                            <img src="{{ $v->image_url }}" alt="...">
+                            <div class="carousel-caption">
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                    <a class="left carousel-control" href="#carousel-explorer" role="button" data-slide="prev">
+                        <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+                        <span class="sr-only">Previous</span>
+                    </a>
+                    <a class="right carousel-control" href="#carousel-explorer" role="button" data-slide="next">
+                        <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                        <span class="sr-only">Next</span>
+                    </a>
+                </div>
+            </div>
+        <!--第三块，热卖商品-->
         <div class="row row-goods">
             <div class="col-md-12 title">
                 <div class="col-md-5 ">
@@ -144,4 +142,4 @@
         </div>
     </div>
 
-@endsection
+@stop

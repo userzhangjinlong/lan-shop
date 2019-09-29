@@ -19,6 +19,7 @@
                     <li>
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown">所有类目 <b class="caret"></b></a>
                         <ul class="dropdown-menu multi-level">
+                            <li><a href="{{ route('products.index') }}">全部商品</a></li>
                             <!-- 遍历 $categoryTree 集合，将集合中的每一项以 $category 变量注入 layouts._category_item 模板中并渲染 -->
                             @each('layouts._category_item', $categoryTree, 'category')
                         </ul>
